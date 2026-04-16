@@ -1,4 +1,4 @@
-## Cortex Cloud Security POV Simulation Toolkit
+# Cortex Cloud Security POV Simulation Toolkit
 
 This toolkit demonstrates the detection and response capabilities of **Cortex Cloud** across AWS, GCP, and Azure. It provisions "Safe-by-Design" resources that simulate security risks without exposing your environment to actual threats.
 
@@ -45,13 +45,15 @@ GCP: ```gcloud auth application-default login```
 Azure: ```az login```
 
 ## 📖 Step-by-Step Instructions
-# 1. Initialize
+### 1. Initialize
 Navigate into the folder for the cloud provider you wish to test:
 
-```cd aws_simulation```
-```terraform init```
+```
+cd aws_simulation
+terraform init
+```
 
-# 2. Interactive Apply
+### 2. Interactive Apply
 Run the apply command. Terraform will pause and ask you interactive questions:
 
 ```terraform apply```
@@ -62,12 +64,12 @@ The CLI will ask: ```Do you want to run Posture simulation? (yes/no)```
 
 Type `yes` to deploy or `no` to skip.
 
-# 3. Verify in Cortex
+### 3. Verify in Cortex
 Log in to your Cortex Cloud Console to see the alerts.
 
 Note: Vulnerability scanning results appear after the next discovery cycle (15–60 mins).
 
-# 4. Cleanup
+### 4. Cleanup
 Always destroy resources after the POV to maintain environment hygiene:
 
 ```terraform destroy```
