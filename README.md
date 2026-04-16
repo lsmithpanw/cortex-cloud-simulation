@@ -1,4 +1,4 @@
-# Cortex Cloud Security POV Simulation Toolkit
+## Cortex Cloud Security POV Simulation Toolkit
 
 This toolkit demonstrates the detection and response capabilities of **Cortex Cloud** across AWS, GCP, and Azure. It provisions "Safe-by-Design" resources that simulate security risks without exposing your environment to actual threats.
 
@@ -15,63 +15,62 @@ This toolkit demonstrates the detection and response capabilities of **Cortex Cl
 ## 📂 Project Structure
 Organize your local directory as follows for the scripts to function correctly:
 
-```text
-/cortex-pov
-  ├── aws/
+```/cortex-cloud-simulation
+  ├── aws_simulation/
   │   ├── providers.tf
   │   ├── variables.tf
-  │   └── simulation.tf
-  ├── gcp/
+  │   └── aws_simulation.tf
+  ├── gcp_simulation/
   │   ├── providers.tf
   │   ├── variables.tf
-  │   └── simulation.tf
-  └── azure/
+  │   └── gcp_simulation.tf
+  └── azure_simulation/
       ├── providers.tf
       ├── variables.tf
-      └── simulation.tf
+      └── azure_simulation.tf```
 
-🛠️ Prerequisites
+## 🛠️ Prerequisites
 Ensure you have the following installed and authenticated:
 
-Terraform CLI: Download Here
+`Terraform CLI`
 
 Authentication:
 
-AWS: aws configure
+AWS: ```aws configure```
 
-GCP: gcloud auth application-default login
+GCP: ```gcloud auth application-default login```
 
-Azure: az login
+Azure: ```az login```
 
-📖 Step-by-Step Instructions
-1. Initialize
+## 📖 Step-by-Step Instructions
+# 1. Initialize
 Navigate into the folder for the cloud provider you wish to test:
 
-cd aws
-terraform init
+```cd aws_simulation```
+```terraform init```
 
-2. Interactive Apply
+# 2. Interactive Apply
 Run the apply command. Terraform will pause and ask you interactive questions:
 
-terraform apply
+```terraform apply```
 
 What to expect:
 
-The CLI will ask: Do you want to run Posture simulation? (yes/no)
+The CLI will ask: ```Do you want to run Posture simulation? (yes/no)```
 
-Type yes to deploy or no to skip.
+Type `yes` to deploy or `no` to skip.
 
-3. Verify in Cortex
+# 3. Verify in Cortex
 Log in to your Cortex Cloud Console to see the alerts.
 
 Note: Vulnerability scanning results appear after the next discovery cycle (15–60 mins).
 
-4. Cleanup
+# 4. Cleanup
 Always destroy resources after the POV to maintain environment hygiene:
 
-terraform destroy
+```terraform destroy```
 
-📝 Important Notes
-Regions: Default is us-east-1 (AWS) or us-central1 (GCP). Update providers.tf if needed.
+## 📝 Important Notes
+Regions: Default is `us-east-1` (AWS) or `us-central1` (GCP). Update providers.tf if needed.
 
 Sandbox: Recommended for use in non-production accounts.
