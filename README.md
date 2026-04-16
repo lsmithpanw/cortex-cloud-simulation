@@ -15,6 +15,8 @@ This toolkit demonstrates the detection and response capabilities of **Cortex Cl
 ## 📂 Project Structure
 Organize your local directory as follows for the scripts to function correctly:
 
+```
+
 /cortex-cloud-simulation
   ├── aws_simulation/
   │   ├── providers.tf
@@ -28,6 +30,8 @@ Organize your local directory as follows for the scripts to function correctly:
       ├── providers.tf
       ├── variables.tf
       └── azure_simulation.tf
+
+```
 
 ## 🛠️ Prerequisites
 Ensure you have the following installed and authenticated:
@@ -71,6 +75,6 @@ Always destroy resources after the POV to maintain environment hygiene:
 ```terraform destroy```
 
 ## 📝 Important Notes
-Regions: Default is `us-east-1` (AWS) or `us-central1` (GCP). Update providers.tf if needed.
+Regions: Default is `us-east-1` (AWS) or `us-central1` (GCP). Update `providers.tf` if needed.
 
 Sandbox: Recommended for use in non-production accounts.
