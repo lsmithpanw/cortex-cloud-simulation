@@ -15,8 +15,7 @@ This toolkit demonstrates the detection and response capabilities of **Cortex Cl
 ## 📂 Project Structure
 Organize your local directory as follows for the scripts to function correctly:
 
-`
-
+```
 /cortex-cloud-simulation
   ├── aws_simulation/
   │   ├── providers.tf
@@ -30,8 +29,7 @@ Organize your local directory as follows for the scripts to function correctly:
       ├── providers.tf
       ├── variables.tf
       └── azure_simulation.tf
-
-`
+```
 
 ## 🛠️ Prerequisites
 Ensure you have the following installed and authenticated:
