@@ -58,7 +58,7 @@ Run the apply command. Terraform will pause and ask you interactive questions:
 
 ```terraform apply```
 
-The CLI will then asks:
+The CLI will then ask:
 
  ```
 Do you want to run Posture simulation? (yes/no)
