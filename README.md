@@ -38,11 +38,20 @@ Ensure you have the following installed and authenticated:
 
 Authentication:
 
-AWS: ```aws configure```
+AWS: 
+```
+aws configure
+```
 
-GCP: ```gcloud auth application-default login```
+GCP:
+ ```
+gcloud auth application-default login
+```
 
-Azure: ```az login```
+Azure: 
+```
+az login
+```
 
 ## 📖 Step-by-Step Instructions
 ### 1. Initialize
@@ -56,11 +65,13 @@ terraform init
 ### 2. Interactive Apply
 Run the apply command. Terraform will pause and ask you interactive questions:
 
-```terraform apply```
+```
+terraform apply
+```
 
 The CLI will then ask:
 
- ```
+```
 Do you want to run Posture simulation? (yes/no)
 Do you want to run Vulnerability simulation? (yes/no)
 Do you want to run Malware simulation? (yes/no)
@@ -76,7 +87,9 @@ Note: Vulnerability scanning results appear after the next discovery cycle (15�
 ### 4. Cleanup
 Always destroy resources after the POV to maintain environment hygiene:
 
-```terraform destroy```
+```
+terraform destroy
+```
 
 ## 📝 Important Notes
 Regions: Default is `us-east-1` (AWS) or `us-central1` (GCP). Update `providers.tf` if needed.
