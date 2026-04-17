@@ -1,0 +1,9 @@
+# Ignore terraform plugin folders in any sub-directory
+**/.terraform/
+
+# Ignore lock files in any sub-directory (since you want them hidden)
+**/.terraform.lock.hcl
+
+# Ignore all state files anywhere in the project
+**/*.tfstate
+**/*.tfstate.*
