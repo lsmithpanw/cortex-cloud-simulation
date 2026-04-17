@@ -60,7 +60,13 @@ Run the apply command. Terraform will pause and ask you interactive questions:
 
 What to expect:
 
-The CLI will ask: ```Do you want to run Posture simulation? (yes/no)```
+The CLI will ask:
+
+ ```
+Do you want to run Posture simulation? (yes/no)
+Do you want to run Vulnerability simulation? (yes/no)
+Do you want to run Malware simulation? (yes/no)
+```
 
 Type `yes` to deploy or `no` to skip.
 
