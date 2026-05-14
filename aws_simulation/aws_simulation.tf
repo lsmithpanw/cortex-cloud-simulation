@@ -1,54 +1,59 @@
 # ==========================================
-# 0. DEDICATED SIMULATION NETWORK (VPC)
+# 0. NETWORK INFRASTRUCTURE (Isolated VPC)
 # ==========================================
-resource "aws_vpc" "sim_vpc" {
-  # Create the VPC if EITHER Posture or Vulnerability is 'yes'
-  count      = (var.run_posture == "yes" || var.run_vulnerability == "yes") ? 1 : 0
-  cidr_block = "10.99.0.0/16"
-  tags       = { Name = "Cortex-Simulation-VPC" }
+# Creates a dedicated, air-gapped network for simulations. 
+# No Internet Gateway is attached to ensure absolute safety.
+
+resource "aws_vpc" "simulation_vpc" {
+  count      = var.run_vulnerability == "yes" ? 1 : 0
+  cidr_block = "10.0.0.0/16"
+  
+  tags = {
+    Name = "Cortex-Simulation-VPC"
+  }
 }
 
-resource "aws_subnet" "sim_subnet" {
-  count             = (var.run_posture == "yes" || var.run_vulnerability == "yes") ? 1 : 0
-  vpc_id            = aws_vpc.sim_vpc[0].id
-  cidr_block        = "10.99.1.0/24"
-  availability_zone = "us-east-1a" # Hardcoded to match EBS for simplicity
-  tags              = { Name = "Cortex-Simulation-Subnet" }
+resource "aws_subnet" "simulation_subnet" {
+  count      = var.run_vulnerability == "yes" ? 1 : 0
+  vpc_id     = aws_vpc.simulation_vpc[0].id
+  cidr_block = "10.0.1.0/24"
+  
+  tags = {
+    Name = "Cortex-Simulation-Subnet"
+  }
 }
 
 # ==========================================
 # 1. POSTURE SIMULATION (CSPM)
 # ==========================================
-# RESOURCE: Unencrypted Private EBS Volume
-# DESCRIPTION: Models a "Compliance Failure" in cloud hygiene. We provision this 
-# volume into our dedicated simulation AZ (us-east-1a) to demonstrate how Cortex 
-# identifies unencrypted storage.
-# WHY IT'S SAFE: It is a config-only violation. The volume is empty, not attached 
-# to any host, and is isolated within a private simulation-only VPC. It has no network
-# path for data exfiltration or external access.
-# CORTEX ALERT: "EBS Volume is not encrypted."
-resource "aws_ebs_volume" "posture_sim" {
-  count             = var.run_posture == "yes" ? 1 : 0
-  availability_zone = "us-east-1a" # Matches the Subnet AZ
-  size              = 1
-  encrypted         = false  # CSPM triggers on unencrypted
-  tags              = { Name = "Cortex-Posture-Simulation-Safe" }
+# RESOURCE: Private S3 Bucket with Security Gaps
+# DESCRIPTION: Models "Configuration Drift." This asset is intentionally 
+# deployed without standard security controls.
+#
+# CORTEX ALERTS: 
+# 1. AWS S3 Object Versioning is disabled. 
+# 2. AWS S3 bucket policy does not enforce HTTPS request only.
+
+resource "aws_s3_bucket" "posture_sim_gap" {
+  count         = var.run_posture == "yes" ? 1 : 0
+  bucket_prefix = "cortex-posture-gap-"
+  force_destroy = true
+
+  tags = {
+    Simulation-Type = "Cortex-Posture-Simulation-Safe"
+  }
 }
 
 # ==========================================
 # 2. VULNERABILITY SIMULATION (CWP)
 # ==========================================
 # RESOURCE: Internal Legacy Host (Ubuntu 18.04)
-# DESCRIPTION: Models "Technical Debt." We use the Data Source below to dynamically 
-# find an official Ubuntu 18.04 image. This OS version is End-of-Life (EOL) and 
-# contains 100+ known CVEs that the Cortex Agentless scanner will identify.
-# WHY IT'S SAFE: This host is placed in a dedicated private subnet with 
-# 'associate_public_ip_address' set to FALSE. It has no public footprint and 
-# cannot be reached or exploited from the internet.
-# CORTEX ALERT: "Host OS version is EOL" and "Critical Vulnerabilities Detected."
+# DESCRIPTION: Models "Technical Debt." Uses an EOL OS version with 
+# known CVEs for Agentless scanner detection.
+
 data "aws_ami" "ubuntu_18_04" {
   most_recent        = true
-  owners             = ["099720109477"] 
+  owners             = ["099720109477"] # Canonical
   include_deprecated = true
   filter {
     name   = "name"
@@ -59,31 +64,56 @@ data "aws_ami" "ubuntu_18_04" {
 resource "aws_instance" "vuln_sim" {
   count                       = var.run_vulnerability == "yes" ? 1 : 0
   ami                         = data.aws_ami.ubuntu_18_04.id
-  instance_type               = "t3.micro"
-  subnet_id                   = aws_subnet.sim_subnet[0].id
+  instance_type               = "t2.micro" 
+  subnet_id                   = aws_subnet.simulation_subnet[0].id
   associate_public_ip_address = false 
-  tags                        = { Name = "Cortex-Vulnerability-Simulation-Safe" }
+
+  root_block_device {
+    encrypted   = true
+    volume_type = "gp3"
+    volume_size = 8
+  }
+
+  tags = { 
+    Name            = "Cortex-Vuln-Simulation"
+    Simulation-Type = "Cortex-Vulnerability-Simulation-Safe"
+  }
 }
 
 # ==========================================
-# 3. DATA & MALWARE SIMULATION (DDR)
+# 3. DATA MALWARE SIMULATION (DSPM)
 # ==========================================
-# RESOURCE: EICAR Test String in Private S3 Bucket
-# DESCRIPTION: Demonstrates "Data Detection & Response." Cortex scans the storage layer 
-# via API to identify malicious files within your data perimeter.
-# WHY IT'S SAFE: The bucket is private (all new S3 buckets have "Block Public Access" 
-# enabled by default). The file contains the harmless EICAR test string, 
-# which is an industry-standard non-malicious file used to verify security logic.
-# CORTEX ALERT: "Malicious file detected in S3 bucket."
-resource "aws_s3_bucket" "malware_sim" {
-  count         = var.run_malware == "yes" ? 1 : 0
-  bucket        = "cortex-malware-sim-aws-${random_id.sim_id.hex}"
-  force_destroy = true
+# RESOURCE: Official Palo Alto Networks WildFire Test APK
+# DESCRIPTION: Uploads a verified malware sample to S3 for detection.
+
+locals {
+  malware_enabled = var.run_malware == "yes" ? 1 : 0
+  local_file_path = "${path.module}/malware.apk"
 }
 
-resource "aws_s3_object" "eicar_file" {
-  count   = var.run_malware == "yes" ? 1 : 0
-  bucket  = aws_s3_bucket.malware_sim[0].id
-  key     = "malware-test.txt"
-  content = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+resource "aws_s3_bucket" "malware_sim_bucket" {
+  count         = local.malware_enabled
+  bucket_prefix = "cortex-malware-sim-scan-"
+  force_destroy = true 
+}
+
+resource "aws_s3_object" "apk_malware_file" {
+  count  = local.malware_enabled
+  bucket = aws_s3_bucket.malware_sim_bucket[0].id
+  
+  # The name as it will appear in the Cortex console/Alerts
+  key    = "malaware-sim-file.apk"
+  
+  # Pointing to your local file
+  source = local.local_file_path
+
+  # Ensures Terraform detects if you swap the file for a different sample
+  etag   = filemd5(local.local_file_path)
+
+  content_type           = "application/vnd.android.package-archive"
+  server_side_encryption = "AES256"
+
+  tags = {
+    Simulation-Type = "Cortex-Official-WildFire-Malware-Simulation-Safe"
+  }
 }

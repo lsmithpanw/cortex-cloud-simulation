@@ -5,30 +5,32 @@ This toolkit demonstrates the detection and response capabilities of **Cortex Cl
 ---
 
 ## 🛡️ Safety & Privacy
-* **No Public Exposure:** All VMs are provisioned without Public IPs.
-* **Private Storage:** All storage buckets are private and hardened.
-* **Inert Malware:** Uses the industry-standard **EICAR** test string (harmless text).
-* **Isolated Assets:** Scripts create *new* resources and do not modify existing data.
+* **Isolated Networking:** Every simulation creates a dedicated, air-gapped VPC/VNet with **no Internet Gateway**. 
+* **No Public Exposure:** All VMs are provisioned in private subnets with **no Public IPs**.
+* **Validated Test Malware:** Uses the official **Palo Alto Networks WildFire APK**—a non-executable Android package designed for safe security testing
 
 ---
 
 ## 📂 Project Structure
-Organize your local directory as follows for the scripts to function correctly:
+Organize your local directory as follows. **Ensure the `malware.apk` file is present in every cloud folder** for the DSPM simulations to work:
 
 ```
 /cortex-cloud-simulation
   ├── aws_simulation/
-  │   ├── providers.tf
-  │   ├── variables.tf
-  │   └── aws_simulation.tf
+  │   ├── aws_simulation.tf  # (Consolidated Simulation Logic)
+  │   ├── provider.tf        # (Cloud Credentials/Region)
+  │   ├── variables.tf       # (Interactive Menu)
+  │   └── malware.apk        # <--- MUST BE PRESENT
   ├── gcp_simulation/
-  │   ├── providers.tf
+  │   ├── gcp_simulation.tf
+  │   ├── provider.tf
   │   ├── variables.tf
-  │   └── gcp_simulation.tf
+  │   └── malware.apk        # <--- MUST BE PRESENT
   └── azure_simulation/
-      ├── providers.tf
+      ├── azure_simulation.tf
+      ├── provider.tf
       ├── variables.tf
-      └── azure_simulation.tf
+      └── malware.apk        # <--- MUST BE PRESENT
 ```
 
 ## 🛠️ Prerequisites
@@ -72,12 +74,10 @@ terraform apply
 The CLI will then ask:
 
 ```
-Do you want to run Posture simulation? (yes/no)
-Do you want to run Vulnerability simulation? (yes/no)
-Do you want to run Malware simulation? (yes/no)
+[POSTURE] Enter 'yes' to CREATE/KEEP or 'no' to DESTROY/SKIP the Posture simulation:
+[VULN] Enter 'yes' to CREATE/KEEP or 'no' to DESTROY/SKIP the Vulnerability simulation:
+[MALWARE] Enter 'yes' to CREATE/KEEP or 'no' to DESTROY/SKIP the Malware simulation:
 ```
-
-Type `yes` to deploy or `no` to skip.
 
 ### 3. Verify in Cortex
 Log in to your Cortex Cloud Console to see the alerts.
@@ -88,10 +88,12 @@ Note: Vulnerability scanning results appear after the next discovery cycle (15�
 Always destroy resources after the POV to maintain environment hygiene:
 
 ```
-terraform destroy
+terraform apply
 ```
+Then provide a `no` to all the interactive prompts to destroy all.
 
 ## 📝 Important Notes
-Regions: Default is `us-east-1` (AWS) or `us-central1` (GCP). Update `providers.tf` if needed.
-
-Sandbox: Recommended for use in non-production accounts.
+* **Cleanup Grace:** We have disabled "Object Lock" and "Legal Hold" in these scripts to ensure cleanup works instantly without manual CLI overrides.
+* **Regions:** Defaults are `us-east-1` (AWS), `us-central1` (GCP), and your Resource Group location (Azure).
+* **SSH Keys:** Azure scripts require a local public key at `~/.ssh/id_rsa.pub` for VM creation.
+* **Sandbox:** Recommended for use in non-production accounts.
