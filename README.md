@@ -80,7 +80,10 @@ The CLI will then ask:
 ### 3. Verify in Cortex
 Log in to your Cortex Cloud Console to see the alerts.
 
-Note: Vulnerability scanning results appear after the next discovery cycle (15–60 mins).
+**Notes on Timing:**
+* **Vulnerability Scanning:** Results typically appear after the next discovery cycle (**15–60 mins**).
+* **Malware Detection:** Detected malware might take up to several days to appear in the console via standard automated cycles. In order to expedite the detection, perform an **on-demand scan**:
+  * *(Inventory > All Assets > Data > Storage Buckets > Click on the bucket > Click on three dots on top right > Scan for Data)*
 
 ### 4. Cleanup
 Always destroy resources after the POV to maintain environment hygiene:
