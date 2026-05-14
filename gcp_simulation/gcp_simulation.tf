@@ -35,7 +35,7 @@ resource "google_storage_bucket" "posture_sim_gap" {
   location      = "US"
   force_destroy = true
 
-  # Set to false to ensure the asset is NOT public
+  # Set to enforced to ensure the asset is NOT public
   public_access_prevention = "enforced"
 
   # Intentionally disabled to trigger CSPM alerts
@@ -71,7 +71,7 @@ resource "google_compute_instance" "vuln_sim" {
 
   network_interface {
     subnetwork = google_compute_subnetwork.simulation_subnet[0].id
-    # Empty access_config block removed to ensure NO Public IP is assigned
+    # No access_config block ensures NO Public IP is assigned
   }
 
   labels = {
@@ -84,30 +84,28 @@ resource "google_compute_instance" "vuln_sim" {
 # 3. DATA MALWARE SIMULATION (DSPM)
 # ==========================================
 # RESOURCE: Official Palo Alto Networks WildFire Test APK
-# DESCRIPTION: Uploads a verified malware sample to a GCS Bucket for detection.
-
-locals {
-  malware_enabled = var.run_malware == "yes" ? 1 : 0
-  local_file_path = "${path.module}/malware.apk"
-}
+# DESCRIPTION: Streams a verified malware sample directly into a GCS Bucket.
+# WHY IT'S SAFE: Uses Public Access Prevention (Enforced) and identity-based 
+# streaming to ensure the file is never accessible or locally stored.
 
 resource "google_storage_bucket" "malware_sim_bucket" {
-  count                    = local.malware_enabled
+  count                    = var.run_malware == "yes" ? 1 : 0
   name                     = "ctx-malware-sim-scan-${random_id.sim_id.hex}"
   location                 = "US"
   force_destroy            = true
   public_access_prevention = "enforced"
 }
 
-resource "google_storage_bucket_object" "apk_malware_file" {
-  count  = local.malware_enabled
-  name   = "malaware-sim-file.apk"
-  bucket = google_storage_bucket.malware_sim_bucket[0].name
-  
-  # Pointing to your local file
-  source = local.local_file_path
+resource "terraform_data" "download_malware_gcp" {
+  count = var.run_malware == "yes" ? 1 : 0
 
-  metadata = {
-    simulation-type = "cortex-official-wildfire-malware-simulation-safe"
+  triggers_replace = [
+    google_storage_bucket.malware_sim_bucket[0].name
+  ]
+
+  provisioner "local-exec" {
+    # File name: malaware-sim-file.apk
+    # Metadata used for Cortex classification: cortex-official-wildfire-malware-simulation-safe
+    command = "curl -sL https://wildfire.paloaltonetworks.com/publicapi/test/apk | gcloud storage cp - gs://${google_storage_bucket.malware_sim_bucket[0].name}/malaware-sim-file.apk --custom-metadata=simulation-type=cortex-official-wildfire-malware-simulation-safe"
   }
 }

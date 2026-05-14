@@ -84,36 +84,26 @@ resource "aws_instance" "vuln_sim" {
 # 3. DATA MALWARE SIMULATION (DSPM)
 # ==========================================
 # RESOURCE: Official Palo Alto Networks WildFire Test APK
-# DESCRIPTION: Uploads a verified malware sample to S3 for detection.
-
-locals {
-  malware_enabled = var.run_malware == "yes" ? 1 : 0
-  local_file_path = "${path.module}/malware.apk"
-}
+# DESCRIPTION: Downloads a verified malware sample directly to S3 via CLI stream.
+# WHY IT'S SAFE: The file is non-executable and streamed directly to the bucket,
+# ensuring it never persists as a file on the local deployment machine.
 
 resource "aws_s3_bucket" "malware_sim_bucket" {
-  count         = local.malware_enabled
+  count         = var.run_malware == "yes" ? 1 : 0
   bucket_prefix = "cortex-malware-sim-scan-"
   force_destroy = true 
 }
 
-resource "aws_s3_object" "apk_malware_file" {
-  count  = local.malware_enabled
-  bucket = aws_s3_bucket.malware_sim_bucket[0].id
-  
-  # The name as it will appear in the Cortex console/Alerts
-  key    = "malaware-sim-file.apk"
-  
-  # Pointing to your local file
-  source = local.local_file_path
+resource "terraform_data" "download_malware_aws" {
+  count = var.run_malware == "yes" ? 1 : 0
 
-  # Ensures Terraform detects if you swap the file for a different sample
-  etag   = filemd5(local.local_file_path)
+  triggers_replace = [
+    aws_s3_bucket.malware_sim_bucket[0].id
+  ]
 
-  content_type           = "application/vnd.android.package-archive"
-  server_side_encryption = "AES256"
-
-  tags = {
-    Simulation-Type = "Cortex-Official-WildFire-Malware-Simulation-Safe"
+  provisioner "local-exec" {
+    # File name: malaware-sim-file.apk
+    # Metadata used for Cortex classification: Cortex-Official-WildFire-Malware-Simulation-Safe
+    command = "curl -sL https://wildfire.paloaltonetworks.com/publicapi/test/apk | aws s3 cp - s3://${aws_s3_bucket.malware_sim_bucket[0].id}/malaware-sim-file.apk --metadata Simulation-Type=Cortex-Official-WildFire-Malware-Simulation-Safe"
   }
 }

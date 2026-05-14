@@ -7,30 +7,28 @@ This toolkit demonstrates the detection and response capabilities of **Cortex Cl
 ## 🛡️ Safety & Privacy
 * **Isolated Networking:** Every simulation creates a dedicated, air-gapped VPC/VNet with **no Internet Gateway**. 
 * **No Public Exposure:** All VMs are provisioned in private subnets with **no Public IPs**.
-* **Validated Test Malware:** Uses the official **Palo Alto Networks WildFire APK**—a non-executable Android package designed for safe security testing
+* **Validated Test Malware:** Uses the official **Palo Alto Networks WildFire APK**—a non-executable Android package.
+* **Zero Local Footprint:** The malware file is streamed directly from the official WildFire URL (from [this page](https://docs.paloaltonetworks.com/advanced-wildfire/administration/configure-advanced-wildfire-analysis/verify-wildfire-submissions/test-a-sample-malware-file)) to your cloud storage via the Cloud CLI.
 
 ---
 
 ## 📂 Project Structure
-Organize your local directory as follows. **Ensure the `malware.apk` file is present in every cloud folder** for the DSPM simulations to work:
+Organize your local directory as follows:
 
 ```
 /cortex-cloud-simulation
   ├── aws_simulation/
   │   ├── aws_simulation.tf  # (Consolidated Simulation Logic)
   │   ├── provider.tf        # (Cloud Credentials/Region)
-  │   ├── variables.tf       # (Interactive Menu)
-  │   └── malware.apk        # <--- MUST BE PRESENT
+  │   └── variables.tf       # (Interactive Menu)
   ├── gcp_simulation/
   │   ├── gcp_simulation.tf
   │   ├── provider.tf
-  │   ├── variables.tf
-  │   └── malware.apk        # <--- MUST BE PRESENT
+  │   └── variables.tf
   └── azure_simulation/
       ├── azure_simulation.tf
       ├── provider.tf
-      ├── variables.tf
-      └── malware.apk        # <--- MUST BE PRESENT
+      └── variables.tf
 ```
 
 ## 🛠️ Prerequisites
@@ -90,7 +88,7 @@ Always destroy resources after the POV to maintain environment hygiene:
 ```
 terraform apply
 ```
-Then provide a `no` to all the interactive prompts to destroy all.
+When prompted, type `no` for all three interactive prompts. This will trigger Terraform to destroy the existing simulation assets.
 
 ## 📝 Important Notes
 * **Cleanup Grace:** We have disabled "Object Lock" and "Legal Hold" in these scripts to ensure cleanup works instantly without manual CLI overrides.

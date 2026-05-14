@@ -110,15 +110,12 @@ resource "azurerm_linux_virtual_machine" "vuln_sim" {
 # 3. DATA MALWARE SIMULATION (DSPM)
 # ==========================================
 # RESOURCE: Official Palo Alto Networks WildFire Test APK
-# DESCRIPTION: Uploads a verified malware sample to a Blob for detection.
-
-locals {
-  malware_enabled = var.run_malware == "yes" ? 1 : 0
-  local_file_path = "${path.module}/malware.apk"
-}
+# DESCRIPTION: Streams a verified malware sample directly into a Private Blob.
+# WHY IT'S SAFE: Public access is disabled on the storage account, and the 
+# file is streamed via pipe to avoid local storage persistence.
 
 resource "azurerm_storage_account" "malware_sim_storage" {
-  count                     = local.malware_enabled
+  count                     = var.run_malware == "yes" ? 1 : 0
   name                      = "ctxmalwaresim${random_id.sim_id.hex}"
   resource_group_name       = azurerm_resource_group.rg.name
   location                  = azurerm_resource_group.rg.location
@@ -128,23 +125,22 @@ resource "azurerm_storage_account" "malware_sim_storage" {
 }
 
 resource "azurerm_storage_container" "malware_container" {
-  count                 = local.malware_enabled
+  count                 = var.run_malware == "yes" ? 1 : 0
   name                  = "malware-sim-container"
   storage_account_name  = azurerm_storage_account.malware_sim_storage[0].name
   container_access_type = "private"
 }
 
-resource "azurerm_storage_blob" "apk_malware_file" {
-  count                  = local.malware_enabled
-  name                   = "malaware-sim-file.apk"
-  storage_account_name   = azurerm_storage_account.malware_sim_storage[0].name
-  storage_container_name = azurerm_storage_container.malware_container[0].name
-  type                   = "Block"
-  
-  # Pointing to your local file
-  source                 = local.local_file_path
+resource "terraform_data" "download_malware_azure" {
+  count = var.run_malware == "yes" ? 1 : 0
 
-  tags = {
-    Simulation-Type = "Cortex-Official-WildFire-Malware-Simulation-Safe"
+  triggers_replace = [
+    azurerm_storage_container.malware_container[0].id
+  ]
+
+  provisioner "local-exec" {
+    # File name: malaware-sim-file.apk
+    # Metadata used for Cortex classification: Cortex-Official-WildFire-Malware-Simulation-Safe
+    command = "curl -sL https://wildfire.paloaltonetworks.com/publicapi/test/apk | az storage blob upload --account-name ${azurerm_storage_account.malware_sim_storage[0].name} --container-name ${azurerm_storage_container.malware_container[0].name} --name malaware-sim-file.apk --type block --data @- --auth-mode login --tags Simulation-Type=Cortex-Official-WildFire-Malware-Simulation-Safe"
   }
 }
