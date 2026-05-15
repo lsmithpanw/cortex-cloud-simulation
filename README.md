@@ -89,7 +89,7 @@ Log in to your Cortex Cloud Console to see the alerts.
 Always destroy resources after the POV to maintain environment hygiene:
 
 ```
-terraform apply
+terraform destroy
 ```
 When prompted, type `no` for all three interactive prompts. This will trigger Terraform to destroy the existing simulation assets.
 
